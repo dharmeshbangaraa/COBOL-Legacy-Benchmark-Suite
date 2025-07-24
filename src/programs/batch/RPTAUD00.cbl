@@ -1,4 +1,4 @@
-       IDENTIFICATION DIVISION.
+IDENTIFICATION DIVISION.
        PROGRAM-ID. RPTAUD00.
        AUTHOR. CLAUDE.
        DATE-WRITTEN. 2024-04-09.
@@ -10,6 +10,7 @@
       * - Process audit reporting                                     *
       * - Error summary reporting                                     *
       * - Control verification                                        *
+      * 2024-06-XX [COBOL Impact Modifier Agent] Real-time price feed event logging *-- Change: Log price feed events, errors, and alerts
       *****************************************************************
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
@@ -78,11 +79,24 @@
            05  WS-ERR-CODE          PIC X(4).
            05  FILLER               PIC X(2) VALUE SPACES.
            05  WS-ERR-MESSAGE       PIC X(80).
+      *-- Change: Add work area for price feed event
+       01  WS-PRICEFEED-DETAIL.
+           05  WS-PF-TIMESTAMP      PIC X(26).
+           05  FILLER               PIC X(2) VALUE SPACES.
+           05  WS-PF-PORTFOLIO      PIC X(8).
+           05  FILLER               PIC X(2) VALUE SPACES.
+           05  WS-PF-PRICE          PIC S9(13)V99 COMP-3.
+           05  FILLER               PIC X(2) VALUE SPACES.
+           05  WS-PF-EVENT-TYPE     PIC X(10).
+           05  FILLER               PIC X(2) VALUE SPACES.
+           05  WS-PF-MESSAGE        PIC X(80).
 
        PROCEDURE DIVISION.
        0000-MAIN.
            PERFORM 1000-INITIALIZE
            PERFORM 2000-PROCESS-REPORT
+      *-- Change: Add price feed event processing
+           PERFORM 2010-PROCESS-PRICEFEED-EVENTS
            PERFORM 3000-CLEANUP
            GOBACK.
 
@@ -123,6 +137,11 @@
            PERFORM 2200-PROCESS-ERROR-LOG
            PERFORM 2300-WRITE-SUMMARY.
 
+      *-- Change: New paragraph for price feed event processing
+       2010-PROCESS-PRICEFEED-EVENTS.
+           PERFORM 2011-READ-PRICEFEED-RECORDS
+           PERFORM 2012-SUMMARIZE-PRICEFEED-EVENTS.
+
        2100-PROCESS-AUDIT-TRAIL.
            PERFORM 2110-READ-AUDIT-RECORDS
            PERFORM 2120-SUMMARIZE-AUDIT.
@@ -135,6 +154,14 @@
            PERFORM 2310-WRITE-AUDIT-SUMMARY
            PERFORM 2320-WRITE-ERROR-SUMMARY
            PERFORM 2330-WRITE-CONTROL-SUMMARY.
+
+      *-- Change: Stub for price feed event reading
+       2011-READ-PRICEFEED-RECORDS.
+           DISPLAY 'Reading price feed events for audit report.'.
+
+      *-- Change: Stub for price feed event summary
+       2012-SUMMARIZE-PRICEFEED-EVENTS.
+           DISPLAY 'Summarizing price feed events for audit report.'.
 
        3000-CLEANUP.
            CLOSE AUDIT-FILE
