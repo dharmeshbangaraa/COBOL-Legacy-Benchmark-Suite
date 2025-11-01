@@ -29,10 +29,6 @@ IDENTIFICATION DIVISION.
            SELECT REPORT-FILE ASSIGN TO RPTFILE
                ORGANIZATION IS SEQUENTIAL
                FILE STATUS IS WS-REPORT-STATUS.
-      *-- Change: Add price history file for compliance
-           SELECT PRICE-HISTORY-FILE ASSIGN TO PRCHIST
-               ORGANIZATION IS SEQUENTIAL
-               FILE STATUS IS WS-PRCHIST-STATUS.
 
        DATA DIVISION.
        FILE SECTION.
@@ -43,12 +39,6 @@ IDENTIFICATION DIVISION.
            RECORDING MODE IS F
            BLOCK CONTAINS 0 RECORDS.
        01  REPORT-RECORD             PIC X(132).
-      *-- Change: Add price history file section
-       FD  PRICE-HISTORY-FILE.
-       01  PRICE-HISTORY-RECORD.
-           05  PRCHIST-SECURITY-ID   PIC X(12).
-           05  PRCHIST-PRICE         PIC 9(13)V99.
-           05  PRCHIST-TIMESTAMP     PIC X(26).
 
        WORKING-STORAGE SECTION.
            COPY RTNCODE.
@@ -57,8 +47,6 @@ IDENTIFICATION DIVISION.
            05  WS-AUDIT-STATUS       PIC XX.
            05  WS-ERROR-STATUS       PIC XX.
            05  WS-REPORT-STATUS      PIC XX.
-      *-- Change: Add price history file status
-           05  WS-PRCHIST-STATUS     PIC XX.
 
        01  WS-REPORT-HEADERS.
            05  WS-HEADER1.
@@ -90,11 +78,6 @@ IDENTIFICATION DIVISION.
            05  WS-ERR-CODE          PIC X(4).
            05  FILLER               PIC X(2) VALUE SPACES.
            05  WS-ERR-MESSAGE       PIC X(80).
-      *-- Change: Add price history detail
-       01  WS-PRICE-HISTORY-DETAIL.
-           05  WS-PH-SECURITY-ID    PIC X(12).
-           05  WS-PH-PRICE          PIC 9(13)V99.
-           05  WS-PH-TIMESTAMP      PIC X(26).
 
        PROCEDURE DIVISION.
        0000-MAIN.
@@ -127,13 +110,7 @@ IDENTIFICATION DIVISION.
                MOVE 'ERROR OPENING REPORT FILE'
                  TO WS-ERROR-MESSAGE
                PERFORM 9999-ERROR-HANDLER
-           END-IF
-      *-- Change: Open price history file
-           OPEN INPUT PRICE-HISTORY-FILE
-           IF WS-PRCHIST-STATUS NOT = '00'
-               DISPLAY '*-- Change: Error opening price history file'
-           END-IF
-           .
+           END-IF.
 
        1200-WRITE-HEADERS.
            ACCEPT WS-REPORT-DATE FROM DATE
@@ -144,34 +121,25 @@ IDENTIFICATION DIVISION.
        2000-PROCESS-REPORT.
            PERFORM 2100-PROCESS-AUDIT-TRAIL
            PERFORM 2200-PROCESS-ERROR-LOG
-           PERFORM 2250-PROCESS-PRICE-HISTORY
            PERFORM 2300-WRITE-SUMMARY.
 
-      *-- Change: Add price history processing
-       2250-PROCESS-PRICE-HISTORY.
-           IF WS-PRCHIST-STATUS = '00'
-               PERFORM 2251-READ-PRICE-HISTORY
-           END-IF
-           .
-       2251-READ-PRICE-HISTORY.
-           PERFORM UNTIL WS-PRCHIST-STATUS = '10'
-               READ PRICE-HISTORY-FILE
-                   AT END
-                       MOVE '10' TO WS-PRCHIST-STATUS
-                   NOT AT END
-                       MOVE PRCHIST-SECURITY-ID TO WS-PH-SECURITY-ID
-                       MOVE PRCHIST-PRICE TO WS-PH-PRICE
-                       MOVE PRCHIST-TIMESTAMP TO WS-PH-TIMESTAMP
-                       DISPLAY '*-- Change: Price history: ' WS-PH-SECURITY-ID ' ' WS-PH-PRICE
-               END-READ
-           END-PERFORM
-           .
+       2100-PROCESS-AUDIT-TRAIL.
+           PERFORM 2110-READ-AUDIT-RECORDS
+           PERFORM 2120-SUMMARIZE-AUDIT.
+
+       2200-PROCESS-ERROR-LOG.
+           PERFORM 2210-READ-ERROR-RECORDS
+           PERFORM 2220-SUMMARIZE-ERRORS.
+
+       2300-WRITE-SUMMARY.
+           PERFORM 2310-WRITE-AUDIT-SUMMARY
+           PERFORM 2320-WRITE-ERROR-SUMMARY
+           PERFORM 2330-WRITE-CONTROL-SUMMARY.
 
        3000-CLEANUP.
            CLOSE AUDIT-FILE
                 ERROR-FILE
-                REPORT-FILE
-                PRICE-HISTORY-FILE.
+                REPORT-FILE.
 
        9999-ERROR-HANDLER.
            DISPLAY WS-ERROR-MESSAGE
