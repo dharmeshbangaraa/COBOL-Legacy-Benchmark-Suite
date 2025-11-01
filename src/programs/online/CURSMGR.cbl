@@ -1,4 +1,4 @@
-       IDENTIFICATION DIVISION.
+IDENTIFICATION DIVISION.
        PROGRAM-ID. CURSMGR.
       *****************************************************************
       * Cursor Management for Online Programs                           *
