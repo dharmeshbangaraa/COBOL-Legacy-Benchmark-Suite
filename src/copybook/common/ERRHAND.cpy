@@ -1,4 +1,4 @@
-      *================================================================*
+*================================================================*
       * Copybook Name: ERRHAND
       * Description: Standard Error Handling Definitions
       * Author: [Author name]
@@ -53,4 +53,4 @@
            05  ERR-VSAM-23         PIC X(80) VALUE
                'Record not found'.
            05  ERR-OTHER           PIC X(80) VALUE
-               'Unexpected VSAM error'. 
+               'Unexpected VSAM error'.
