@@ -15,9 +15,6 @@
                88  AUD-TRANSACTION     VALUE 'TRAN'.
                88  AUD-USER-ACTION     VALUE 'USER'.
                88  AUD-SYSTEM-EVENT    VALUE 'SYST'.
-      *-- Change: Add price feed error and history types
-               88  AUD-PRICE-FEED-ERR  VALUE 'PERR'.
-               88  AUD-PRICE-HIST      VALUE 'PHST'.
            05  AUD-ACTION           PIC X(8).
                88  AUD-CREATE         VALUE 'CREATE  '.
                88  AUD-UPDATE         VALUE 'UPDATE  '.
@@ -34,10 +31,6 @@
            05  AUD-KEY-INFO.
                10  AUD-PORTFOLIO-ID  PIC X(8).
                10  AUD-ACCOUNT-NO    PIC X(10).
-      *-- Change: Add price feed error code and price history fields
-           05  AUD-PRICE-FEED-ERR-CODE PIC X(8).
-           05  AUD-PRICE-HIST-PRICE    PIC 9(13)V99.
-           05  AUD-PRICE-HIST-TS       PIC X(26).
            05  AUD-BEFORE-IMAGE     PIC X(100).
            05  AUD-AFTER-IMAGE      PIC X(100).
            05  AUD-MESSAGE          PIC X(100).
