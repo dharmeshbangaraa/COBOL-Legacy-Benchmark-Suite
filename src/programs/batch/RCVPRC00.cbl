@@ -3,6 +3,7 @@
       * Description: Process Recovery Handler
       * Version: 1.0
       * Date: 2024
+      * 2024-06-XX [COBOL Impact Modifier Agent] Real-time price feed polling and error handling *-- Change: Real-time price feed polling and error handling
       *================================================================*
        IDENTIFICATION DIVISION.
        PROGRAM-ID. RCVPRC00.
@@ -27,6 +28,12 @@
                ACCESS MODE IS DYNAMIC
                RECORD KEY IS PSR-KEY
                FILE STATUS IS WS-PSR-STATUS.
+
+      *-- Change: Add Market Price Feed File for polling
+           SELECT MARKET-PRICE-FILE
+               ASSIGN TO MQPRCFEED
+               ORGANIZATION IS SEQUENTIAL
+               FILE STATUS IS WS-MKT-STATUS.
        
        DATA DIVISION.
        FILE SECTION.
@@ -35,6 +42,14 @@
            
        FD  PROCESS-SEQ-FILE.
            COPY PRCSEQ.
+
+      *-- Change: Market Price Feed Record
+       FD  MARKET-PRICE-FILE.
+       01  MARKET-PRICE-RECORD.
+           05  MKT-PORT-ID        PIC X(8).
+           05  MKT-ACCOUNT-NO     PIC X(10).
+           05  MKT-PRICE          PIC S9(13)V99 COMP-3.
+           05  MKT-TIMESTAMP      PIC X(26).
        
        WORKING-STORAGE SECTION.
            COPY BCHCON.
@@ -43,6 +58,8 @@
        01  WS-FILE-STATUS.
            05  WS-BCT-STATUS         PIC X(2).
            05  WS-PSR-STATUS         PIC X(2).
+      *-- Change: Market Price Feed File Status
+           05  WS-MKT-STATUS         PIC X(2).
            
        01  WS-WORK-AREAS.
            05  WS-CURRENT-TIME       PIC X(26).
@@ -54,7 +71,14 @@
                88  WS-ACTION-RESTART   VALUE 'R'.
                88  WS-ACTION-BYPASS    VALUE 'B'.
                88  WS-ACTION-TERMINATE VALUE 'T'.
-           
+
+      *-- Change: Real-time price tracking and error
+           05  WS-REALTIME-PRICE     PIC S9(13)V99.
+           05  WS-REALTIME-TS        PIC X(26).
+           05  WS-PRICE-FEED-ERROR   PIC X(01) VALUE 'N'.
+               88  PRICE-FEED-ERROR VALUE 'Y'.
+               88  PRICE-FEED-OK    VALUE 'N'.
+
        LINKAGE SECTION.
        01  LS-RECOVERY-REQUEST.
            05  LS-FUNCTION          PIC X(4).
@@ -89,9 +113,18 @@
            PERFORM 1100-OPEN-FILES
            PERFORM 1200-VALIDATE-REQUEST
            PERFORM 1300-SET-RECOVERY-MODE
+
+      *-- Change: Open Market Price Feed File
+           OPEN INPUT MARKET-PRICE-FILE
+           IF WS-MKT-STATUS NOT = '00'
+               MOVE 'Error opening market price feed file' TO ERR-TEXT
+               PERFORM 9000-ERROR-ROUTINE
+           END-IF
            .
            
        2000-PROCESS-RECOVERY.
+      *-- Change: Poll Market Price Feed before recovery
+           PERFORM 2100-POLL-MARKET-PRICE
            EVALUATE WS-RECOVERY-MODE
                WHEN 'P'
                    PERFORM 2100-RECOVER-PROCESS
@@ -100,6 +133,27 @@
                WHEN 'A'
                    PERFORM 2300-RECOVER-ALL
            END-EVALUATE
+           .
+
+      *-- Change: Poll Market Price Feed (simulated polling)
+       2100-POLL-MARKET-PRICE.
+           READ MARKET-PRICE-FILE
+               AT END
+                   SET PRICE-FEED-ERROR TO TRUE
+                   DISPLAY 'Market price feed unavailable or EOF'
+                   PERFORM 2110-LOG-PRICE-FEED-ERROR
+               NOT AT END
+                   MOVE MKT-PRICE TO WS-REALTIME-PRICE
+                   MOVE MKT-TIMESTAMP TO WS-REALTIME-TS
+                   SET PRICE-FEED-OK TO TRUE
+                   DISPLAY 'Received market price: ' WS-REALTIME-PRICE
+           END-READ
+           .
+
+      *-- Change: Log price feed error to audit log
+       2110-LOG-PRICE-FEED-ERROR.
+           DISPLAY 'AUDIT: Price feed error at ' WS-REALTIME-TS
+           *-- Change: Here, call audit log routine or write to AUDITLOG
            .
            
        3000-TERMINATE-RECOVERY.
@@ -293,9 +347,11 @@
        3200-CLOSE-FILES.
            CLOSE BATCH-CONTROL-FILE
                  PROCESS-SEQ-FILE
-                 
+                 MARKET-PRICE-FILE
+
            IF WS-BCT-STATUS NOT = '00' OR
-              WS-PSR-STATUS NOT = '00'
+              WS-PSR-STATUS NOT = '00' OR
+              WS-MKT-STATUS NOT = '00'
                MOVE 'Error closing files' TO ERR-TEXT
                PERFORM 9000-ERROR-ROUTINE
            END-IF
