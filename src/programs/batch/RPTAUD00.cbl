@@ -10,6 +10,7 @@ IDENTIFICATION DIVISION.
       * - Process audit reporting                                     *
       * - Error summary reporting                                     *
       * - Control verification                                        *
+      * 2024-06-XX [COBOL Impact Modifier Agent] Add price feed error and valuation update audit reporting *-- Change: Add price feed error and valuation update audit reporting
       *****************************************************************
        ENVIRONMENT DIVISION.
        INPUT-OUTPUT SECTION.
@@ -70,6 +71,18 @@ IDENTIFICATION DIVISION.
            05  FILLER               PIC X(2) VALUE SPACES.
            05  WS-AUD-MESSAGE       PIC X(80).
 
+      *-- Change: Add fields for price feed error and valuation update
+       01  WS-PRICE-FEED-ERROR-DETAIL.
+           05  WS-PFE-TIMESTAMP     PIC X(26).
+           05  WS-PFE-PROGRAM       PIC X(8).
+           05  WS-PFE-MESSAGE       PIC X(80).
+
+       01  WS-VALUATION-UPDATE-DETAIL.
+           05  WS-VU-TIMESTAMP      PIC X(26).
+           05  WS-VU-PORT-ID        PIC X(8).
+           05  WS-VU-NEW-PRICE      PIC S9(13)V99.
+           05  WS-VU-MESSAGE        PIC X(80).
+
        01  WS-ERROR-DETAIL.
            05  WS-ERR-TIMESTAMP     PIC X(26).
            05  FILLER               PIC X(2) VALUE SPACES.
@@ -123,6 +136,10 @@ IDENTIFICATION DIVISION.
            PERFORM 2200-PROCESS-ERROR-LOG
            PERFORM 2300-WRITE-SUMMARY.
 
+      *-- Change: Add price feed error and valuation update reporting
+           PERFORM 2400-PROCESS-PRICE-FEED-ERRORS
+           PERFORM 2500-PROCESS-VALUATION-UPDATES
+
        2100-PROCESS-AUDIT-TRAIL.
            PERFORM 2110-READ-AUDIT-RECORDS
            PERFORM 2120-SUMMARIZE-AUDIT.
@@ -135,6 +152,18 @@ IDENTIFICATION DIVISION.
            PERFORM 2310-WRITE-AUDIT-SUMMARY
            PERFORM 2320-WRITE-ERROR-SUMMARY
            PERFORM 2330-WRITE-CONTROL-SUMMARY.
+
+      *-- Change: Process price feed errors
+       2400-PROCESS-PRICE-FEED-ERRORS.
+           DISPLAY 'Processing price feed error audit entries'
+           *-- Change: Read and report price feed error entries from AUDITLOG
+           .
+
+      *-- Change: Process valuation updates
+       2500-PROCESS-VALUATION-UPDATES.
+           DISPLAY 'Processing valuation update audit entries'
+           *-- Change: Read and report valuation update entries from AUDITLOG
+           .
 
        3000-CLEANUP.
            CLOSE AUDIT-FILE
