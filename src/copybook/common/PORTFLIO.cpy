@@ -7,7 +7,7 @@
       * Date       Author        Description
       * ---------- ------------- -------------------------------------
       * 2024-03-20 [Author]     Initial Creation
-      * 2024-06-XX [COBOL Impact Modifier Agent] Real-time price feed fields added *-- Change: Added real-time price and timestamp fields
+      * 2024-06-XX [COBOL Impact Modifier Agent] Add real-time price, timestamp, historical price fields *-- Change: Add real-time price, timestamp, historical price fields
       *================================================================*
        01  PORT-RECORD.
            05  PORT-KEY.
@@ -26,12 +26,17 @@
                    88  PORT-ACTIVE       VALUE 'A'.
                    88  PORT-CLOSED       VALUE 'C'.
                    88  PORT-SUSPENDED    VALUE 'S'.
-      *-- Change: Add real-time price and timestamp fields
-               10  PORT-REALTIME-PRICE PIC S9(13)V99 COMP-3.
-               10  PORT-REALTIME-TIME  PIC 9(14).
            05  PORT-FINANCIAL-INFO.
                10  PORT-TOTAL-VALUE    PIC S9(13)V99 COMP-3.
                10  PORT-CASH-BALANCE   PIC S9(13)V99 COMP-3.
+
+      *-- Change: Real-time price, timestamp, and historical price tracking
+           05  PORT-REALTIME-PRICE    PIC S9(13)V99 COMP-3.
+           05  PORT-PRICE-TS          PIC X(26).
+           05  PORT-HIST-PRICE-ARR    OCCURS 10 TIMES.
+               10  PORT-HIST-PRICE    PIC S9(13)V99 COMP-3.
+               10  PORT-HIST-TS       PIC X(26).
+
            05  PORT-AUDIT-INFO.
                10  PORT-LAST-USER      PIC X(8).
                10  PORT-LAST-TRANS     PIC 9(8).
