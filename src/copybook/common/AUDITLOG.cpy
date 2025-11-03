@@ -3,7 +3,7 @@
       * Description: Audit Trail Record Definitions
       * Author: [Author name]
       * Date Written: 2024-03-20
-      * 2024-06-XX [COBOL Impact Modifier Agent] Add price feed error and valuation update fields *-- Change: Add price feed error and valuation update fields
+      * 2024-06-XX [COBOL Impact Modifier] Add feed failure, outdated price, update event fields *-- Change: Added feed failure, outdated price, update event fields
       *================================================================*
        01  AUDIT-RECORD.
            05  AUD-HEADER.
@@ -16,9 +16,6 @@
                88  AUD-TRANSACTION     VALUE 'TRAN'.
                88  AUD-USER-ACTION     VALUE 'USER'.
                88  AUD-SYSTEM-EVENT    VALUE 'SYST'.
-      *-- Change: Add price feed error and valuation update types
-               88  AUD-PRICE-FEED-ERR  VALUE 'PFER'.
-               88  AUD-VALUATION-UPD   VALUE 'VALU'.
            05  AUD-ACTION           PIC X(8).
                88  AUD-CREATE         VALUE 'CREATE  '.
                88  AUD-UPDATE         VALUE 'UPDATE  '.
@@ -38,7 +35,13 @@
            05  AUD-BEFORE-IMAGE     PIC X(100).
            05  AUD-AFTER-IMAGE      PIC X(100).
            05  AUD-MESSAGE          PIC X(100).
-      *-- Change: Add price feed error and valuation update details
-           05  AUD-PRICE-FEED-ERR-TS  PIC X(26).
-           05  AUD-VALUATION-UPD-TS   PIC X(26).
-           05  AUD-VALUATION-PRICE    PIC S9(13)V99 COMP-3.
+      *-- Change: Add feed failure, outdated price, update event fields
+           05  AUD-FEED-FAILURE     PIC X(1).
+               88  AUD-FEED-FAIL      VALUE 'Y'.
+               88  AUD-FEED-OK        VALUE 'N'.
+           05  AUD-OUTDATED-PRICE   PIC X(1).
+               88  AUD-PRICE-OLD      VALUE 'Y'.
+               88  AUD-PRICE-OK       VALUE 'N'.
+           05  AUD-UPDATE-EVENT     PIC X(1).
+               88  AUD-UPDATE-REALTIME VALUE 'Y'.
+               88  AUD-UPDATE-BATCH    VALUE 'N'.
